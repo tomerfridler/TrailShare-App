@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "328264652245",
+    "firebase_url": "https://trailshare-52a1a-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "trailshare-52a1a",
+    "storage_bucket": "trailshare-52a1a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:328264652245:android:e72d237e9f51287a12995c",
+        "android_client_info": {
+          "package_name": "com.example.trailshare"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "328264652245-b6c5ttfglq6j5u7mpha8fk9kojtursdk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.trailshare",
+            "certificate_hash": "273c091c5b61ead06c9ad595e98b96271e7db42b"
+          }
+        },
+        {
+          "client_id": "328264652245-khrlbbuqb1rl4q87t707jnl1j9paiv8f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB94xLEpIf7Tu7Gctn1NQiRQ1X2g0qbcdk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "328264652245-khrlbbuqb1rl4q87t707jnl1j9paiv8f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
