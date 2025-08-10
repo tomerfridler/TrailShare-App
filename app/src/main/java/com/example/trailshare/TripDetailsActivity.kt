@@ -14,23 +14,27 @@ import com.google.firebase.database.*
 
 class TripDetailsActivity : AppCompatActivity() {
 
+    // UI reviews list
     private lateinit var reviewsRecycler: RecyclerView
     private lateinit var reviewAdapter: ReviewAdapter
     private val reviewList = mutableListOf<Review>()
 
+    // Firebase + state
     private lateinit var databaseRef: DatabaseReference
     private lateinit var currentUserEmail: String
     private lateinit var tripKey: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_trip_details)
+        setContentView(R.layout.activity_trip_details)  // Inflate the screen layout
 
+        // Read data passed from previous screen via Intent extras
         val title = intent.getStringExtra("trip_title") ?: ""
         val description = intent.getStringExtra("trip_description") ?: ""
         val imageUrl = intent.getStringExtra("trip_imageUrl") ?: ""
         val ownerEmail = intent.getStringExtra("trip_ownerEmail") ?: ""
 
+        // Bind UI views from XML
         val backButton = findViewById<ImageButton>(R.id.trip_details_back_button)
         val tripImage = findViewById<ImageView>(R.id.trip_image)
         val tripTitle = findViewById<TextView>(R.id.trip_location)
@@ -41,29 +45,35 @@ class TripDetailsActivity : AppCompatActivity() {
         val askButton = findViewById<Button>(R.id.btn_message)
         val deleteButton = findViewById<Button>(R.id.btn_delete_trip)
 
+        // Setup RecyclerView for reviews
         reviewsRecycler = findViewById(R.id.recycler_reviews)
         reviewsRecycler.layoutManager = LinearLayoutManager(this)
         reviewAdapter = ReviewAdapter(reviewList)
         reviewsRecycler.adapter = reviewAdapter
 
+        // Back button
         backButton.setOnClickListener {
             finish()
         }
 
+        // Populate the UI with trip content
         tripTitle.text = title
         tripDescription.text = description
 
+        // Load trip image with Glide
         Glide.with(this)
             .load(imageUrl)
             .placeholder(R.drawable.ic_launcher_background)
             .into(tripImage)
 
+        // Firebase setup
         currentUserEmail = FirebaseAuth.getInstance().currentUser?.email ?: ""
         databaseRef = FirebaseDatabase.getInstance().reference
         tripKey = title.replace(" ", "_")
 
         loadReviews()
 
+        // Handle review submission
         submitReviewButton.setOnClickListener {
             val rating = ratingBar.rating
             val reviewText = reviewInput.text.toString().trim()
@@ -71,14 +81,17 @@ class TripDetailsActivity : AppCompatActivity() {
             if (reviewText.isEmpty()) {
                 Toast.makeText(this, "Please write a review!", Toast.LENGTH_SHORT).show()
             } else {
+                // Create review model and push it under /reviews/tripKey/generatedId
                 val review = Review(
                     userEmail = currentUserEmail,
                     text = reviewText,
                     rating = rating
                 )
 
+                // push() generates a unique child key
                 databaseRef.child("reviews").child(tripKey).push().setValue(review)
                     .addOnSuccessListener {
+                        // Reset UI after success
                         Toast.makeText(this, "Review submitted!", Toast.LENGTH_SHORT).show()
                         reviewInput.text.clear()
                         ratingBar.rating = 0f
@@ -89,7 +102,9 @@ class TripDetailsActivity : AppCompatActivity() {
             }
         }
 
+        // Owner vs visitor UI logic
         if (currentUserEmail == ownerEmail) {
+            // The owner shouldn't chat with themselves or rate their own trip
             askButton.visibility = View.GONE
             deleteButton.visibility = View.VISIBLE
 
@@ -97,6 +112,7 @@ class TripDetailsActivity : AppCompatActivity() {
             reviewInput.visibility = View.GONE
             submitReviewButton.visibility = View.GONE
 
+            // Owner can delete the trip
             deleteButton.setOnClickListener {
                 android.app.AlertDialog.Builder(this)
                     .setTitle("Delete Trip")
@@ -108,6 +124,7 @@ class TripDetailsActivity : AppCompatActivity() {
                     .show()
             }
 
+            // A visitor can message the owner and add a review
         } else {
             askButton.visibility = View.VISIBLE
             deleteButton.visibility = View.GONE
@@ -116,6 +133,7 @@ class TripDetailsActivity : AppCompatActivity() {
             reviewInput.visibility = View.VISIBLE
             submitReviewButton.visibility = View.VISIBLE
 
+            // Open chat screen with owner
             askButton.setOnClickListener {
                 val intent = Intent(this, ChatActivity::class.java)
                 intent.putExtra("receiverEmail", ownerEmail)
@@ -125,10 +143,12 @@ class TripDetailsActivity : AppCompatActivity() {
         }
     }
 
+    // Listen to /reviews/tripKey and refresh the list whenever data changes
     private fun loadReviews() {
         databaseRef.child("reviews").child(tripKey)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
+                    // Rebuild list from server snapshot
                     reviewList.clear()
                     for (reviewSnapshot in snapshot.children) {
                         val review = reviewSnapshot.getValue(Review::class.java)
@@ -136,6 +156,7 @@ class TripDetailsActivity : AppCompatActivity() {
                             reviewList.add(review)
                         }
                     }
+                    // Notify adapter that data set has changed
                     reviewAdapter.notifyDataSetChanged()
                 }
 
@@ -145,17 +166,20 @@ class TripDetailsActivity : AppCompatActivity() {
             })
     }
 
+    // Delete this trip documents and its associated reviews
     private fun deleteTrip(tripTitle: String) {
         val tripsRef = databaseRef.child("trips")
 
+        // Find trip(s) by title and remove them
         tripsRef.orderByChild("title").equalTo(tripTitle)
             .addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
+                    // Remove each matched trip
                     for (tripSnapshot in snapshot.children) {
                         tripSnapshot.ref.removeValue()
                     }
 
-                    // מוחק גם את הביקורות
+                    // Also remove all reviews for this trip
                     databaseRef.child("reviews").child(tripKey).removeValue()
 
                     Toast.makeText(this@TripDetailsActivity, "Trip deleted!", Toast.LENGTH_SHORT).show()
